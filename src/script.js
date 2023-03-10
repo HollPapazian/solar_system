@@ -98,7 +98,7 @@ scene.add(mars);
 const jupiterGeometry = new THREE.SphereGeometry(0.8, 64, 64);
 const jupiterMaterial = new THREE.MeshStandardMaterial({ map: jupiterTexture });
 const jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
-const JUPITER_POSITION = 8;
+const JUPITER_POSITION = 9;
 jupiter.position.x = JUPITER_POSITION;
 scene.add(jupiter);
 
@@ -118,21 +118,21 @@ saturnRing.rotation.x = Math.PI / 4;
 const saturn = new THREE.Group();
 saturn.add(saturnMesh)
 saturn.add(saturnRing)
-const SATURN_POSITION = 10.5;
+const SATURN_POSITION = 12.5;
 saturn.position.x = SATURN_POSITION;
 scene.add(saturn);
 
 const uranusGeometry = new THREE.SphereGeometry(0.6, 64, 64);
 const uranusMaterial = new THREE.MeshStandardMaterial({ map: uranusTexture });
 const uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
-const URANUS_POSITION = 13;
+const URANUS_POSITION = 16;
 uranus.position.x = URANUS_POSITION;
 scene.add(uranus);
 
 const neptuneGeometry = new THREE.SphereGeometry(0.6, 64, 64);
 const neptuneMaterial = new THREE.MeshStandardMaterial({ map: neptuneTexture });
 const neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
-const NEPTUNE_POSITION = 15;
+const NEPTUNE_POSITION = 19;
 neptune.position.x = NEPTUNE_POSITION;
 scene.add(neptune);
 
