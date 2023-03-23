@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import gsap from "gsap";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { config } from "./config";
 /**
  * Base
  */
@@ -14,9 +15,9 @@ const scene = new THREE.Scene();
 // Lights
 
 const ambientLight = new THREE.AmbientLight(0x404040, 1.2); // soft white ambientLight scene.add( ambientLight );
-scene.add(ambientLight);
+// scene.add(ambientLight); 
 
-const pointLight = new THREE.PointLight(0xffffff, 1.5, 20, 1);
+const pointLight = new THREE.PointLight(0xffffff, 1.5, 40, 1);
 pointLight.castShadow = true;
 pointLight.shadow.mapSize.width = 1024;
 pointLight.shadow.mapSize.height = 1024;
@@ -29,47 +30,21 @@ scene.add(pointLight);
 /**
  * Textures
  */
-const loadingManager = new THREE.LoadingManager();
-loadingManager.onStart = () => {
-  console.log("loadingManager: loading started");
-};
-loadingManager.onLoad = () => {
-  console.log("loadingManager: loading finished");
-};
-loadingManager.onProgress = () => {
-  console.log("loadingManager: loading progressing");
-};
-loadingManager.onError = () => {
-  console.log("loadingManager: loading error");
-};
+const textureLoader = new THREE.TextureLoader();
 
-const textureLoader = new THREE.TextureLoader(loadingManager);
-
-const mercuryTexture = textureLoader.load("/textures/planets/2k_mercury.jpeg");
-const sunTexture = textureLoader.load("/textures/planets/2k_sun.jpeg");
-const earthTexture = textureLoader.load(
-  "/textures/planets/2k_earth_daymap.jpeg"
-);
-const earthNormalTexture = textureLoader.load(
-  "/textures/planets/2k_earth_normal_map.jpeg"
-);
-
-const venusTexture = textureLoader.load(
-  "/textures/planets/2k_venus_surface.jpeg"
-);
-const marsTexture = textureLoader.load("/textures/planets/2k_mars.jpeg");
-const jupiterTexture = textureLoader.load("/textures/planets/2k_jupiter.jpeg");
-const saturnTexture = textureLoader.load("/textures/planets/2k_saturn.jpeg");
+const sunTexture = textureLoader.load("/textures/planets/sun.jpeg");
+const saturnTexture = textureLoader.load("/textures/planets/saturn.jpeg");
 const saturnRingTexture = textureLoader.load(
   "/textures/planets/small_ring_tex.png"
 );
-const uranusTexture = textureLoader.load("/textures/planets/2k_uranus.jpeg");
-const neptuneTexture = textureLoader.load("/textures/planets/2k_neptune.jpeg");
 const moonTexture = textureLoader.load("/textures/planets/2k_moon.jpeg");
 const callistoTexture = textureLoader.load("/textures/planets/callisto.jpeg");
 const ioTexture = textureLoader.load("/textures/planets/io.jpg");
 const ganymedeTexture = textureLoader.load("/textures/planets/ganymede.jpeg");
 const europaTexture = textureLoader.load("/textures/planets/europa.webp");
+const spaceTexture = textureLoader.load("/textures/planets/space3.png");
+const spaceLmTexture = textureLoader.load("/textures/planets/spaceLM.jpeg");
+const whiteLmTexture = textureLoader.load("/textures/planets/white.png");
 ///
 const loader = new GLTFLoader();
 
@@ -134,38 +109,75 @@ let currentPlanetSizes = {
 };
 
 let gap = 1;
-const sunDiameter = 1.3927;
-const planets = [];
 
+const createPlanet = (name, size) => {
+  const planetGeometry = new THREE.SphereGeometry(size, 64, 64);
+  const planetMaterial = new THREE.MeshStandardMaterial({
+    map: textureLoader.load(`/textures/planets/${name}.jpeg`),
+    lightMap: whiteLmTexture,
+    lightMapIntensity: .15,
+  });
+  planetGeometry.setAttribute(
+    "uv2",
+    new THREE.BufferAttribute(planetGeometry.attributes.uv.array, 2)
+  );
+  return new THREE.Mesh(planetGeometry, planetMaterial);
+};
+
+const sunDiameter = 1.3927;
 const sunGeometry = new THREE.SphereGeometry(sunDiameter, 64, 64);
 const sunMaterial = new THREE.MeshStandardMaterial({
   map: sunTexture,
-  lightMap: sunTexture,
-  lightMapIntensity: 1,
+  lightMap: whiteLmTexture,
+  lightMapIntensity: 1.2,
+  // side: THREE.DoubleSide
 });
+sunGeometry.setAttribute(
+  "uv2",
+  new THREE.BufferAttribute(sunGeometry.attributes.uv.array, 2)
+);
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
 
-const mercuryGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.mercury,
-  64,
-  64
+const spaceGeometry = new THREE.SphereGeometry(150, 64, 64);
+const spaceMaterial = new THREE.MeshStandardMaterial({
+  map: spaceTexture,
+  lightMap: spaceLmTexture,
+  lightMapIntensity: 0.3,
+  side: THREE.BackSide,
+  ambientLight: "#000",
+});
+const space = new THREE.Mesh(spaceGeometry, spaceMaterial);
+space.geometry.setAttribute(
+  "uv2",
+  new THREE.BufferAttribute(space.geometry.attributes.uv.array, 2)
 );
-const mercuryMaterial = new THREE.MeshStandardMaterial({ map: mercuryTexture });
-const mercury = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
+scene.add(space);
+
+const planets = {};
+
+for (const planetName of [
+  "mercury",
+  "venus",
+  "earth",
+  "mars",
+  "jupiter",
+  "uranus",
+  "neptune",
+]) {
+  if (planetName === "saturn") {
+    continue;
+  }
+  planets[planetName] = createPlanet(planetName, config[planetName].bigSize);
+}
+
+const { mercury, venus, earth, mars, jupiter, uranus, neptune } = planets;
+
 const MERCURY_POSITION = sunDiameter + currentPlanetSizes.mercury + gap;
 gap += 0.2;
 mercury.position.x = MERCURY_POSITION;
 scene.add(mercury);
-planets.push(mercury);
 
-const venusGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.venus,
-  64,
-  64
-);
-const venusMaterial = new THREE.MeshStandardMaterial({ map: venusTexture });
-const venus = new THREE.Mesh(venusGeometry, venusMaterial);
 const VENUS_POSITION =
   MERCURY_POSITION +
   currentPlanetSizes.mercury +
@@ -173,27 +185,13 @@ const VENUS_POSITION =
   gap;
 gap += 0.2;
 venus.position.x = VENUS_POSITION;
-scene.add(venus);
-planets.push(venus);
 
-const earthGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.earth,
-  64,
-  64
-);
-const earthMaterial = new THREE.MeshStandardMaterial({
-  map: earthTexture,
-  normalMap: earthNormalTexture,
-});
-const earth = new THREE.Mesh(earthGeometry, earthMaterial);
 const EARTH_POSITION =
   VENUS_POSITION + currentPlanetSizes.venus + currentPlanetSizes.earth + gap;
 gap += 0.2;
 earth.position.x = EARTH_POSITION;
 earth.castShadow = true;
 earth.receiveShadow = true;
-scene.add(earth);
-planets.push(earth);
 
 // moon
 const moonGeometry = new THREE.SphereGeometry(
@@ -210,33 +208,17 @@ moon.castShadow = true;
 moon.receiveShadow = true;
 scene.add(moon);
 
-//
-
-const marsGeometry = new THREE.SphereGeometry(currentPlanetSizes.mars, 64, 64);
-const marsMaterial = new THREE.MeshStandardMaterial({ map: marsTexture });
-const mars = new THREE.Mesh(marsGeometry, marsMaterial);
 const MARS_POSITION =
   EARTH_POSITION + currentPlanetSizes.earth + currentPlanetSizes.mars + gap;
 gap += 0.2;
 mars.position.x = MARS_POSITION;
-scene.add(mars);
-planets.push(mars);
 
-const jupiterGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.jupiter,
-  64,
-  64
-);
-const jupiterMaterial = new THREE.MeshStandardMaterial({ map: jupiterTexture });
-const jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
 const JUPITER_POSITION =
   MARS_POSITION + currentPlanetSizes.mars + currentPlanetSizes.jupiter + gap;
 gap += 0.2;
 jupiter.position.x = JUPITER_POSITION;
 jupiter.castShadow = true;
 jupiter.receiveShadow = true;
-scene.add(jupiter);
-planets.push(jupiter);
 
 const callistoGeometry = new THREE.SphereGeometry(
   currentPlanetSizes.jupiter / 9,
@@ -286,9 +268,9 @@ const ganymedeGeometry = new THREE.SphereGeometry(
   64
 );
 const ganymedeMaterial = new THREE.MeshStandardMaterial({
-  map: europaTexture,
+  map: ganymedeTexture,
 });
-const ganymede = new THREE.Mesh(europaGeometry, europaMaterial);
+const ganymede = new THREE.Mesh(ganymedeGeometry, ganymedeMaterial);
 ganymede.position.x = JUPITER_POSITION;
 ganymede.castShadow = true;
 ganymede.receiveShadow = true;
@@ -303,11 +285,15 @@ const saturnGeometry = new THREE.SphereGeometry(
 );
 const saturnMaterial = new THREE.MeshStandardMaterial({
   map: saturnTexture,
-  side: THREE.DoubleSide,
+  // side: THREE.DoubleSide,
+  lightMap: whiteLmTexture,
+  lightMapIntensity: .13,
 });
 const saturnRingMaterial = new THREE.MeshStandardMaterial({
   map: saturnRingTexture,
   side: THREE.DoubleSide,
+  lightMap: sunTexture,
+  lightMapIntensity: 0.5,
 });
 const saturnMesh = new THREE.Mesh(saturnGeometry, saturnMaterial);
 const saturnRingGeometry = new THREE.RingGeometry(
@@ -327,16 +313,8 @@ const SATURN_POSITION =
   gap;
 gap += 0.2;
 saturn.position.x = SATURN_POSITION;
-scene.add(saturn);
-planets.push(saturn);
+planets.saturn = saturn;
 
-const uranusGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.uranus,
-  64,
-  64
-);
-const uranusMaterial = new THREE.MeshStandardMaterial({ map: uranusTexture });
-const uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
 const URANUS_POSITION =
   SATURN_POSITION +
   currentPlanetSizes.saturnRingEnd +
@@ -344,16 +322,7 @@ const URANUS_POSITION =
   gap;
 gap += 0.2;
 uranus.position.x = URANUS_POSITION;
-scene.add(uranus);
-planets.push(uranus);
 
-const neptuneGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.neptune,
-  64,
-  64
-);
-const neptuneMaterial = new THREE.MeshStandardMaterial({ map: neptuneTexture });
-const neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
 const NEPTUNE_POSITION =
   URANUS_POSITION +
   currentPlanetSizes.uranus +
@@ -361,8 +330,8 @@ const NEPTUNE_POSITION =
   gap;
 gap += 0.2;
 neptune.position.x = NEPTUNE_POSITION;
-scene.add(neptune);
-planets.push(neptune);
+
+scene.add(mercury, venus, earth, mars, jupiter, uranus, neptune, saturn);
 
 /**
  * Sizes
@@ -394,12 +363,14 @@ const camera = new THREE.PerspectiveCamera(
   75,
   sizes.width / sizes.height,
   0.1,
-  100
+  1000
 );
 camera.position.x = 1;
 camera.position.y = 10;
 camera.position.z = 14;
 // camera.lookAt(10, 10, 10);
+// camera.far = 1000
+// camera.near = 1
 scene.add(camera);
 
 // Controls
@@ -426,11 +397,6 @@ const tick = () => {
   const elapsedTime = clock.getElapsedTime();
   sun.rotation.y = elapsedTime * Math.PI * 0.05;
 
-  // for (const planet of planets) {
-  //   mercury.rotation.y = elapsedTime * Math.PI * 0.12;
-  //   mercury.position.x = Math.sin(elapsedTime) * MERCURY_POSITION;
-  //   mercury.position.z = Math.cos(elapsedTime) * MERCURY_POSITION;
-  // }
   mercury.rotation.y = elapsedTime * Math.PI * 0.12;
   mercury.position.x = Math.sin(elapsedTime) * MERCURY_POSITION;
   mercury.position.z = Math.cos(elapsedTime) * MERCURY_POSITION;
@@ -514,7 +480,6 @@ const tick = () => {
   neptune.rotation.y = elapsedTime * Math.PI * 0.1;
   neptune.position.x = Math.sin(elapsedTime / 8) * NEPTUNE_POSITION;
   neptune.position.z = Math.cos(elapsedTime / 8) * NEPTUNE_POSITION;
-
   // Update controls
   controls.update();
 
@@ -528,20 +493,29 @@ const tick = () => {
 tick();
 
 document.querySelector("button").addEventListener("click", () => {
-  camera.lookAt(10, 10, 10);
-  // camera.up.set( 0, 0, 0 );/
-  camera.updateProjectionMatrix();
   if (uranus.scale.x === 1) {
-    for (const planet of planets) {
-      gsap.to(planet.scale, { duration: 1, delay: 0, x: 4 });
-      gsap.to(planet.scale, { duration: 1, delay: 0, y: 4 });
-      gsap.to(planet.scale, { duration: 1, delay: 0, z: 4 });
+    for (const planet in planets) {
+      gsap.to(planets[planet].scale, {
+        duration: 1,
+        delay: 0,
+        x: config[planet].scale,
+      });
+      gsap.to(planets[planet].scale, {
+        duration: 1,
+        delay: 0,
+        y: config[planet].scale,
+      });
+      gsap.to(planets[planet].scale, {
+        duration: 1,
+        delay: 0,
+        z: config[planet].scale,
+      });
     }
   } else {
-    for (const planet of planets) {
-      gsap.to(planet.scale, { duration: 1, delay: 0, x: 1 });
-      gsap.to(planet.scale, { duration: 1, delay: 0, y: 1 });
-      gsap.to(planet.scale, { duration: 1, delay: 0, z: 1 });
+    for (const planet in planets) {
+      gsap.to(planets[planet].scale, { duration: 1, delay: 0, x: 1 });
+      gsap.to(planets[planet].scale, { duration: 1, delay: 0, y: 1 });
+      gsap.to(planets[planet].scale, { duration: 1, delay: 0, z: 1 });
     }
   }
 });
