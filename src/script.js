@@ -15,7 +15,7 @@ const scene = new THREE.Scene();
 // Lights
 
 const ambientLight = new THREE.AmbientLight(0x404040, 1.2); // soft white ambientLight scene.add( ambientLight );
-// scene.add(ambientLight); 
+// scene.add(ambientLight);
 
 const pointLight = new THREE.PointLight(0xffffff, 1.5, 40, 1);
 pointLight.castShadow = true;
@@ -33,26 +33,21 @@ scene.add(pointLight);
 const textureLoader = new THREE.TextureLoader();
 
 const sunTexture = textureLoader.load("/textures/planets/sun.jpeg");
-const saturnTexture = textureLoader.load("/textures/planets/saturn.jpeg");
 const saturnRingTexture = textureLoader.load(
   "/textures/planets/small_ring_tex.png"
 );
-const moonTexture = textureLoader.load("/textures/planets/2k_moon.jpeg");
-const callistoTexture = textureLoader.load("/textures/planets/callisto.jpeg");
-const ioTexture = textureLoader.load("/textures/planets/io.jpg");
-const ganymedeTexture = textureLoader.load("/textures/planets/ganymede.jpeg");
-const europaTexture = textureLoader.load("/textures/planets/europa.webp");
-const spaceTexture = textureLoader.load("/textures/planets/space3.png");
+const spaceTexture = textureLoader.load("/textures/planets/space5-6.jpeg");
 const spaceLmTexture = textureLoader.load("/textures/planets/spaceLM.jpeg");
 const whiteLmTexture = textureLoader.load("/textures/planets/white.png");
 ///
 const loader = new GLTFLoader();
-
+const planets = {};
 // Load a glTF resource
 let phobos = loader.load("/models/Phobos_1_1000.glb", function (gltf) {
   gltf.scene.position.x = 5;
   gltf.scene.scale.set(0.01, 0.01, 0.01); // THREE.Group
   phobos = gltf.scene;
+  planets.phobos = phobos;
   scene.add(gltf.scene);
 });
 
@@ -61,6 +56,7 @@ loader.load("/models/Deimos_1_1000.glb", function (gltf) {
   gltf.scene.position.x = 5;
   gltf.scene.scale.set(0.01, 0.01, 0.01); // THREE.Group
   deimos = gltf.scene;
+  planets.deimos = deimos;
   scene.add(gltf.scene);
 });
 
@@ -115,13 +111,16 @@ const createPlanet = (name, size) => {
   const planetMaterial = new THREE.MeshStandardMaterial({
     map: textureLoader.load(`/textures/planets/${name}.jpeg`),
     lightMap: whiteLmTexture,
-    lightMapIntensity: .15,
+    lightMapIntensity: 0.15,
   });
   planetGeometry.setAttribute(
     "uv2",
     new THREE.BufferAttribute(planetGeometry.attributes.uv.array, 2)
   );
-  return new THREE.Mesh(planetGeometry, planetMaterial);
+  const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+  planet.castShadow = true;
+  planet.receiveShadow = true;
+  return planet;
 };
 
 const sunDiameter = 1.3927;
@@ -130,7 +129,6 @@ const sunMaterial = new THREE.MeshStandardMaterial({
   map: sunTexture,
   lightMap: whiteLmTexture,
   lightMapIntensity: 1.2,
-  // side: THREE.DoubleSide
 });
 sunGeometry.setAttribute(
   "uv2",
@@ -154,8 +152,6 @@ space.geometry.setAttribute(
 );
 scene.add(space);
 
-const planets = {};
-
 for (const planetName of [
   "mercury",
   "venus",
@@ -165,9 +161,6 @@ for (const planetName of [
   "uranus",
   "neptune",
 ]) {
-  if (planetName === "saturn") {
-    continue;
-  }
   planets[planetName] = createPlanet(planetName, config[planetName].bigSize);
 }
 
@@ -194,19 +187,9 @@ earth.castShadow = true;
 earth.receiveShadow = true;
 
 // moon
-const moonGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.earth / 4,
-  64,
-  64
-);
-const moonMaterial = new THREE.MeshStandardMaterial({
-  map: moonTexture,
-});
-const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+const moon = createPlanet("callisto", config["earth"].bigSize / 4); //new THREE.Mesh(moonGeometry, moonMaterial);
 moon.position.x = EARTH_POSITION;
-moon.castShadow = true;
-moon.receiveShadow = true;
-scene.add(moon);
+planets.moon = moon;
 
 const MARS_POSITION =
   EARTH_POSITION + currentPlanetSizes.earth + currentPlanetSizes.mars + gap;
@@ -217,85 +200,27 @@ const JUPITER_POSITION =
   MARS_POSITION + currentPlanetSizes.mars + currentPlanetSizes.jupiter + gap;
 gap += 0.2;
 jupiter.position.x = JUPITER_POSITION;
-jupiter.castShadow = true;
-jupiter.receiveShadow = true;
 
-const callistoGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.jupiter / 9,
-  64,
-  64
-);
-const callistoMaterial = new THREE.MeshStandardMaterial({
-  map: callistoTexture,
-});
-const callisto = new THREE.Mesh(callistoGeometry, callistoMaterial);
+const callisto = createPlanet("callisto", config["jupiter"].bigSize / 9);
 callisto.position.x = JUPITER_POSITION;
-callisto.castShadow = true;
-callisto.receiveShadow = true;
-scene.add(callisto);
 
-const ioGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.jupiter / 15,
-  64,
-  64
-);
-const ioMaterial = new THREE.MeshStandardMaterial({
-  map: ioTexture,
-});
-const io = new THREE.Mesh(ioGeometry, ioMaterial);
+const io = createPlanet("io", config["jupiter"].bigSize / 15);
 io.position.x = JUPITER_POSITION;
-io.castShadow = true;
-io.receiveShadow = true;
-scene.add(io);
 
-const europaGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.jupiter / 15,
-  64,
-  64
-);
-const europaMaterial = new THREE.MeshStandardMaterial({
-  map: europaTexture,
-});
-const europa = new THREE.Mesh(europaGeometry, europaMaterial);
+const europa = createPlanet("europa", config["jupiter"].bigSize / 15);
 europa.position.x = JUPITER_POSITION;
-europa.castShadow = true;
-europa.receiveShadow = true;
-scene.add(europa);
 
-const ganymedeGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.jupiter / 10,
-  64,
-  64
-);
-const ganymedeMaterial = new THREE.MeshStandardMaterial({
-  map: ganymedeTexture,
-});
-const ganymede = new THREE.Mesh(ganymedeGeometry, ganymedeMaterial);
+const ganymede = createPlanet("ganymede", config["jupiter"].bigSize / 10);
 ganymede.position.x = JUPITER_POSITION;
-ganymede.castShadow = true;
-ganymede.receiveShadow = true;
-scene.add(ganymede);
 
 //
-
-const saturnGeometry = new THREE.SphereGeometry(
-  currentPlanetSizes.saturn,
-  64,
-  64
-);
-const saturnMaterial = new THREE.MeshStandardMaterial({
-  map: saturnTexture,
-  // side: THREE.DoubleSide,
-  lightMap: whiteLmTexture,
-  lightMapIntensity: .13,
-});
 const saturnRingMaterial = new THREE.MeshStandardMaterial({
   map: saturnRingTexture,
   side: THREE.DoubleSide,
   lightMap: sunTexture,
   lightMapIntensity: 0.5,
 });
-const saturnMesh = new THREE.Mesh(saturnGeometry, saturnMaterial);
+const saturnMesh = createPlanet("saturn", config["saturn"].bigSize);
 const saturnRingGeometry = new THREE.RingGeometry(
   currentPlanetSizes.saturnRingsStart,
   currentPlanetSizes.saturnRingEnd,
@@ -331,7 +256,26 @@ const NEPTUNE_POSITION =
 gap += 0.2;
 neptune.position.x = NEPTUNE_POSITION;
 
-scene.add(mercury, venus, earth, mars, jupiter, uranus, neptune, saturn);
+planets.callisto = callisto;
+planets.io = io;
+planets.europa = europa;
+planets.ganymede = ganymede;
+
+scene.add(
+  mercury,
+  venus,
+  earth,
+  mars,
+  jupiter,
+  uranus,
+  neptune,
+  saturn,
+  callisto,
+  io,
+  europa,
+  ganymede,
+  moon
+);
 
 /**
  * Sizes
@@ -368,14 +312,13 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.x = 1;
 camera.position.y = 10;
 camera.position.z = 14;
-// camera.lookAt(10, 10, 10);
-// camera.far = 1000
-// camera.near = 1
 scene.add(camera);
 
 // Controls
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
+controls.maxDistance = 40;
+controls.minDistance = 3;
 
 /**
  * Renderer
@@ -495,27 +438,23 @@ tick();
 document.querySelector("button").addEventListener("click", () => {
   if (uranus.scale.x === 1) {
     for (const planet in planets) {
-      gsap.to(planets[planet].scale, {
-        duration: 1,
-        delay: 0,
-        x: config[planet].scale,
-      });
-      gsap.to(planets[planet].scale, {
-        duration: 1,
-        delay: 0,
-        y: config[planet].scale,
-      });
-      gsap.to(planets[planet].scale, {
-        duration: 1,
-        delay: 0,
-        z: config[planet].scale,
-      });
+      for (const axis of ["x", "y", "z"]) {
+        gsap.to(planets[planet].scale, {
+          duration: 1,
+          delay: 0,
+          [axis]: config[planet].scale,
+        });
+      }
     }
   } else {
     for (const planet in planets) {
-      gsap.to(planets[planet].scale, { duration: 1, delay: 0, x: 1 });
-      gsap.to(planets[planet].scale, { duration: 1, delay: 0, y: 1 });
-      gsap.to(planets[planet].scale, { duration: 1, delay: 0, z: 1 });
+      for (const axis of ["x", "y", "z"]) {
+        gsap.to(planets[planet].scale, {
+          duration: 1,
+          delay: 0,
+          [axis]: config[planet].initScale || 1,
+        });
+      }
     }
   }
 });
