@@ -306,20 +306,23 @@ window.addEventListener("resize", () => {
 const camera = new THREE.PerspectiveCamera(
   75,
   sizes.width / sizes.height,
-  0.1,
+  0.01,
   1000
 );
 camera.position.x = 1;
 camera.position.y = 10;
 camera.position.z = 14;
+camera.lookAt(earth.position);
 scene.add(camera);
 
 // Controls
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.maxDistance = 40;
-controls.minDistance = 3;
-
+controls.minDistance = 0.01;
+controls.minZoom = 0.01;
+controls.enabled = true;
+// controls.autoRotate = true;
 /**
  * Renderer
  */
@@ -335,94 +338,99 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
  * Animate
  */
 const clock = new THREE.Clock();
-
+let isPlay = true;
+let pausedTime = 0;
 const tick = () => {
-  const elapsedTime = clock.getElapsedTime();
-  sun.rotation.y = elapsedTime * Math.PI * 0.05;
+  if (isPlay) {
+    const elapsedTime = clock.getElapsedTime() + pausedTime;
+    sun.rotation.y = elapsedTime * Math.PI * 0.05;
 
-  mercury.rotation.y = elapsedTime * Math.PI * 0.12;
-  mercury.position.x = Math.sin(elapsedTime) * MERCURY_POSITION;
-  mercury.position.z = Math.cos(elapsedTime) * MERCURY_POSITION;
+    mercury.rotation.y = elapsedTime * Math.PI * 0.12;
+    mercury.position.x = Math.sin(elapsedTime) * MERCURY_POSITION;
+    mercury.position.z = Math.cos(elapsedTime) * MERCURY_POSITION;
 
-  venus.rotation.y = elapsedTime * Math.PI * 0.2;
-  venus.position.x = Math.sin(elapsedTime / 2) * VENUS_POSITION;
-  venus.position.z = Math.cos(elapsedTime / 2) * VENUS_POSITION;
+    venus.rotation.y = elapsedTime * Math.PI * 0.2;
+    venus.position.x = Math.sin(elapsedTime / 2) * VENUS_POSITION;
+    venus.position.z = Math.cos(elapsedTime / 2) * VENUS_POSITION;
 
-  earth.rotation.y = elapsedTime * Math.PI * 0.1;
-  earth.position.x = Math.sin(elapsedTime / 3) * EARTH_POSITION;
-  earth.position.z = Math.cos(elapsedTime / 3) * EARTH_POSITION;
+    earth.rotation.y = elapsedTime * Math.PI * 0.25;
+    earth.position.x = Math.sin(elapsedTime / 3) * EARTH_POSITION;
+    earth.position.z = Math.cos(elapsedTime / 3) * EARTH_POSITION;
 
-  moon.rotation.y = elapsedTime * Math.PI * 0.1;
-  moon.position.x =
-    Math.sin(elapsedTime * 1.5) * earth.scale.x + earth.position.x;
-  moon.position.z =
-    Math.cos(elapsedTime * 1.5) * earth.scale.x + earth.position.z;
+    moon.rotation.y = elapsedTime * Math.PI * 0.1;
+    moon.position.x =
+      Math.sin(elapsedTime * 1.5) * earth.scale.x + earth.position.x;
+    moon.position.z =
+      Math.cos(elapsedTime * 1.5) * earth.scale.x + earth.position.z;
 
-  mars.rotation.y = elapsedTime * Math.PI * 0.15;
-  mars.position.x = Math.sin(elapsedTime / 4) * MARS_POSITION;
-  mars.position.z = Math.cos(elapsedTime / 4) * MARS_POSITION;
+    mars.rotation.y = elapsedTime * Math.PI * 0.15;
+    mars.position.x = Math.sin(elapsedTime / 4) * MARS_POSITION;
+    mars.position.z = Math.cos(elapsedTime / 4) * MARS_POSITION;
 
-  if (phobos) {
-    phobos.rotation.y = elapsedTime * Math.PI * 0.1;
-    phobos.position.x = Math.sin(elapsedTime * 1.4) * 0.5 + mars.position.x;
-    phobos.position.z = Math.cos(elapsedTime * 1.4) * 0.5 + mars.position.z;
+    if (phobos) {
+      phobos.rotation.y = elapsedTime * Math.PI * 0.1;
+      phobos.position.x = Math.sin(elapsedTime * 1.4) * 0.5 + mars.position.x;
+      phobos.position.z = Math.cos(elapsedTime * 1.4) * 0.5 + mars.position.z;
+    }
+
+    if (deimos) {
+      deimos.rotation.y = elapsedTime * Math.PI * 0.1;
+      deimos.position.x =
+        Math.sin(elapsedTime * 1.8 + 1) * 0.7 + mars.position.x;
+      deimos.position.z =
+        Math.cos(elapsedTime * 1.8 + 1) * 0.7 + mars.position.z;
+    }
+
+    //
+
+    jupiter.rotation.y = elapsedTime * Math.PI * 0.1;
+    jupiter.position.x = Math.sin(elapsedTime / 5) * JUPITER_POSITION;
+    jupiter.position.z = Math.cos(elapsedTime / 5) * JUPITER_POSITION;
+
+    callisto.rotation.y = elapsedTime * Math.PI * 0.2;
+    callisto.position.x =
+      Math.sin(elapsedTime * 1) * 1 * jupiter.scale.x + jupiter.position.x;
+    callisto.position.z =
+      Math.cos(elapsedTime * 1) * 1 * jupiter.scale.x + jupiter.position.z;
+
+    io.rotation.y = elapsedTime * Math.PI * 0.1;
+    io.position.x =
+      Math.sin(elapsedTime * 1.2 + 0.8) * 1.3 * jupiter.scale.x +
+      jupiter.position.x;
+    io.position.z =
+      Math.cos(elapsedTime * 1.2 + 0.8) * 1.3 * jupiter.scale.x +
+      jupiter.position.z;
+
+    europa.rotation.y = elapsedTime * Math.PI * 0.3;
+    europa.position.x =
+      Math.sin(elapsedTime * 1.4 + 1.6) * 1.5 * jupiter.scale.x +
+      jupiter.position.x;
+    europa.position.z =
+      Math.cos(elapsedTime * 1.4 + 1.6) * 1.5 * jupiter.scale.x +
+      jupiter.position.z;
+
+    ganymede.rotation.y = elapsedTime * Math.PI * 0.5;
+    ganymede.position.x =
+      Math.sin(elapsedTime * 1.6 + 2.4) * 1.2 * jupiter.scale.x +
+      jupiter.position.x;
+    ganymede.position.z =
+      Math.cos(elapsedTime * 1.6 + 2.4) * 1.2 * jupiter.scale.x +
+      jupiter.position.z;
+
+    //
+
+    saturn.rotation.y = elapsedTime * Math.PI * 0.1;
+    saturn.position.x = Math.sin(elapsedTime / 6) * SATURN_POSITION;
+    saturn.position.z = Math.cos(elapsedTime / 6) * SATURN_POSITION;
+
+    uranus.rotation.y = elapsedTime * Math.PI * 0.1;
+    uranus.position.x = Math.sin(elapsedTime / 7) * URANUS_POSITION;
+    uranus.position.z = Math.cos(elapsedTime / 7) * URANUS_POSITION;
+
+    neptune.rotation.y = elapsedTime * Math.PI * 0.1;
+    neptune.position.x = Math.sin(elapsedTime / 8) * NEPTUNE_POSITION;
+    neptune.position.z = Math.cos(elapsedTime / 8) * NEPTUNE_POSITION;
   }
-
-  if (deimos) {
-    deimos.rotation.y = elapsedTime * Math.PI * 0.1;
-    deimos.position.x = Math.sin(elapsedTime * 1.8 + 1) * 0.7 + mars.position.x;
-    deimos.position.z = Math.cos(elapsedTime * 1.8 + 1) * 0.7 + mars.position.z;
-  }
-
-  //
-
-  jupiter.rotation.y = elapsedTime * Math.PI * 0.1;
-  jupiter.position.x = Math.sin(elapsedTime / 5) * JUPITER_POSITION;
-  jupiter.position.z = Math.cos(elapsedTime / 5) * JUPITER_POSITION;
-
-  callisto.rotation.y = elapsedTime * Math.PI * 0.2;
-  callisto.position.x =
-    Math.sin(elapsedTime * 1) * 1 * jupiter.scale.x + jupiter.position.x;
-  callisto.position.z =
-    Math.cos(elapsedTime * 1) * 1 * jupiter.scale.x + jupiter.position.z;
-
-  io.rotation.y = elapsedTime * Math.PI * 0.1;
-  io.position.x =
-    Math.sin(elapsedTime * 1.2 + 0.8) * 1.3 * jupiter.scale.x +
-    jupiter.position.x;
-  io.position.z =
-    Math.cos(elapsedTime * 1.2 + 0.8) * 1.3 * jupiter.scale.x +
-    jupiter.position.z;
-
-  europa.rotation.y = elapsedTime * Math.PI * 0.3;
-  europa.position.x =
-    Math.sin(elapsedTime * 1.4 + 1.6) * 1.5 * jupiter.scale.x +
-    jupiter.position.x;
-  europa.position.z =
-    Math.cos(elapsedTime * 1.4 + 1.6) * 1.5 * jupiter.scale.x +
-    jupiter.position.z;
-
-  ganymede.rotation.y = elapsedTime * Math.PI * 0.5;
-  ganymede.position.x =
-    Math.sin(elapsedTime * 1.6 + 2.4) * 1.2 * jupiter.scale.x +
-    jupiter.position.x;
-  ganymede.position.z =
-    Math.cos(elapsedTime * 1.6 + 2.4) * 1.2 * jupiter.scale.x +
-    jupiter.position.z;
-
-  //
-
-  saturn.rotation.y = elapsedTime * Math.PI * 0.1;
-  saturn.position.x = Math.sin(elapsedTime / 6) * SATURN_POSITION;
-  saturn.position.z = Math.cos(elapsedTime / 6) * SATURN_POSITION;
-
-  uranus.rotation.y = elapsedTime * Math.PI * 0.1;
-  uranus.position.x = Math.sin(elapsedTime / 7) * URANUS_POSITION;
-  uranus.position.z = Math.cos(elapsedTime / 7) * URANUS_POSITION;
-
-  neptune.rotation.y = elapsedTime * Math.PI * 0.1;
-  neptune.position.x = Math.sin(elapsedTime / 8) * NEPTUNE_POSITION;
-  neptune.position.z = Math.cos(elapsedTime / 8) * NEPTUNE_POSITION;
   // Update controls
   controls.update();
 
@@ -434,8 +442,42 @@ const tick = () => {
 };
 
 tick();
-
-document.querySelector("button").addEventListener("click", () => {
+document.querySelector(".play-pause").addEventListener("click", () => {
+  if (isPlay) {
+    pausedTime += clock.getElapsedTime();
+    clock.stop();
+  } else {
+    clock.start();
+  }
+  isPlay = !isPlay;
+  document.querySelector(".play-pause").textContent = isPlay ? "Pause" : "Play";
+});
+let i = 0;
+document.querySelector(".planet-focus").textContent = "sun";
+document.querySelector(".planet-focus").addEventListener("click", () => {
+  const planetEntries = Object.entries(planets);
+  let planetName;
+  let planetMesh;
+  if (i === planetEntries.length) {
+    i = 0;
+    planetName = "sun";
+    planetMesh = sun;
+  }
+  [planetName, planetMesh] = planetEntries[i++];
+  for (const axis of ["x", "y", "z"]) {
+    gsap.to(camera.position, {
+      duration: 1,
+      delay: 0,
+      [axis]:
+        planetMesh.position[axis] +
+        config[planetName].bigSize * planetMesh.scale[axis] * 5,
+    });
+  }
+  camera.lookAt(planetMesh.position);
+  controls.target = planetMesh.position;
+  document.querySelector(".planet-focus").textContent = planetName;
+});
+document.querySelector(".scale").addEventListener("click", () => {
   if (uranus.scale.x === 1) {
     for (const planet in planets) {
       for (const axis of ["x", "y", "z"]) {
