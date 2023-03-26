@@ -19,8 +19,8 @@ const ambientLight = new THREE.AmbientLight(0x404040, 1.2); // soft white ambien
 
 const pointLight = new THREE.PointLight(0xffffff, 1.5, 40, 1);
 pointLight.castShadow = true;
-pointLight.shadow.mapSize.width = 1024;
-pointLight.shadow.mapSize.height = 1024;
+pointLight.shadow.mapSize.width = 1024 * 4;
+pointLight.shadow.mapSize.height = 1024 * 4;
 pointLight.shadow.camera.near = 0.1;
 pointLight.shadow.camera.far = 10;
 const pointLightCameraHelper = new THREE.CameraHelper(pointLight.shadow.camera);
@@ -45,7 +45,11 @@ const planets = {};
 // Load a glTF resource
 let phobos = loader.load("/models/Phobos_1_1000.glb", function (gltf) {
   gltf.scene.position.x = 5;
-  gltf.scene.scale.set(0.01, 0.01, 0.01); // THREE.Group
+  gltf.scene.scale.set(
+    config.phobos.initScale,
+    config.phobos.initScale,
+    config.phobos.initScale
+  ); // THREE.Group
   phobos = gltf.scene;
   planets.phobos = phobos;
   scene.add(gltf.scene);
@@ -54,7 +58,11 @@ let phobos = loader.load("/models/Phobos_1_1000.glb", function (gltf) {
 let deimos;
 loader.load("/models/Deimos_1_1000.glb", function (gltf) {
   gltf.scene.position.x = 5;
-  gltf.scene.scale.set(0.01, 0.01, 0.01); // THREE.Group
+  gltf.scene.scale.set(
+    config.deimos.initScale,
+    config.deimos.initScale,
+    config.deimos.initScale
+  ); // THREE.Group
   deimos = gltf.scene;
   planets.deimos = deimos;
   scene.add(gltf.scene);
@@ -167,7 +175,7 @@ for (const planetName of [
 const { mercury, venus, earth, mars, jupiter, uranus, neptune } = planets;
 
 const MERCURY_POSITION = sunDiameter + currentPlanetSizes.mercury + gap;
-gap += 0.2;
+gap += 0.3;
 mercury.position.x = MERCURY_POSITION;
 scene.add(mercury);
 
@@ -187,7 +195,7 @@ earth.castShadow = true;
 earth.receiveShadow = true;
 
 // moon
-const moon = createPlanet("callisto", config["earth"].bigSize / 4); //new THREE.Mesh(moonGeometry, moonMaterial);
+const moon = createPlanet("moon", config["moon"].bigSize); //new THREE.Mesh(moonGeometry, moonMaterial);
 moon.position.x = EARTH_POSITION;
 planets.moon = moon;
 
@@ -201,16 +209,16 @@ const JUPITER_POSITION =
 gap += 0.2;
 jupiter.position.x = JUPITER_POSITION;
 
-const callisto = createPlanet("callisto", config["jupiter"].bigSize / 9);
+const callisto = createPlanet("callisto", config["callisto"].bigSize);
 callisto.position.x = JUPITER_POSITION;
 
-const io = createPlanet("io", config["jupiter"].bigSize / 15);
+const io = createPlanet("io", config["io"].bigSize);
 io.position.x = JUPITER_POSITION;
 
-const europa = createPlanet("europa", config["jupiter"].bigSize / 15);
+const europa = createPlanet("europa", config["europa"].bigSize);
 europa.position.x = JUPITER_POSITION;
 
-const ganymede = createPlanet("ganymede", config["jupiter"].bigSize / 10);
+const ganymede = createPlanet("ganymede", config["ganymede"].bigSize);
 ganymede.position.x = JUPITER_POSITION;
 
 //
@@ -306,12 +314,12 @@ window.addEventListener("resize", () => {
 const camera = new THREE.PerspectiveCamera(
   75,
   sizes.width / sizes.height,
-  0.01,
+  0.001,
   1000
 );
-camera.position.x = 1;
-camera.position.y = 10;
-camera.position.z = 14;
+camera.position.x = -5;
+camera.position.y = 12;
+camera.position.z = 30;
 camera.lookAt(earth.position);
 scene.add(camera);
 
@@ -329,11 +337,11 @@ controls.enabled = true;
 const renderer = new THREE.WebGLRenderer({
   canvas: canvas,
 });
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false; // true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
+renderer.antialias = true;
 /**
  * Animate
  */
@@ -342,7 +350,7 @@ let isPlay = true;
 let pausedTime = 0;
 const tick = () => {
   if (isPlay) {
-    const elapsedTime = clock.getElapsedTime() + pausedTime;
+    const elapsedTime = clock.getElapsedTime() + pausedTime + Math.PI;
     sun.rotation.y = elapsedTime * Math.PI * 0.05;
 
     mercury.rotation.y = elapsedTime * Math.PI * 0.12;
@@ -357,11 +365,11 @@ const tick = () => {
     earth.position.x = Math.sin(elapsedTime / 3) * EARTH_POSITION;
     earth.position.z = Math.cos(elapsedTime / 3) * EARTH_POSITION;
 
-    moon.rotation.y = elapsedTime * Math.PI * 0.1;
+    moon.rotation.y = elapsedTime * Math.PI * 0.2;
     moon.position.x =
-      Math.sin(elapsedTime * 1.5) * earth.scale.x + earth.position.x;
+      Math.sin(elapsedTime * 1.5) * 1.5 * earth.scale.x + earth.position.x;
     moon.position.z =
-      Math.cos(elapsedTime * 1.5) * earth.scale.x + earth.position.z;
+      Math.cos(elapsedTime * 1.5) * 1.5 * earth.scale.x + earth.position.z;
 
     mars.rotation.y = elapsedTime * Math.PI * 0.15;
     mars.position.x = Math.sin(elapsedTime / 4) * MARS_POSITION;
@@ -376,9 +384,9 @@ const tick = () => {
     if (deimos) {
       deimos.rotation.y = elapsedTime * Math.PI * 0.1;
       deimos.position.x =
-        Math.sin(elapsedTime * 1.8 + 1) * 0.7 + mars.position.x;
+        Math.sin(elapsedTime * 1.8 + 1) * 0.7 * mars.scale.x + mars.position.x;
       deimos.position.z =
-        Math.cos(elapsedTime * 1.8 + 1) * 0.7 + mars.position.z;
+        Math.cos(elapsedTime * 1.8 + 1) * 0.7 * mars.scale.x + mars.position.z;
     }
 
     //
@@ -455,26 +463,42 @@ document.querySelector(".play-pause").addEventListener("click", () => {
 let i = 0;
 document.querySelector(".planet-focus").textContent = "sun";
 document.querySelector(".planet-focus").addEventListener("click", () => {
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.needsUpdate = true
   const planetEntries = Object.entries(planets);
   let planetName;
   let planetMesh;
-  if (i === planetEntries.length) {
+  if (i === planetEntries.length - 1) {
     i = 0;
     planetName = "sun";
     planetMesh = sun;
+  } else {
+    [planetName, planetMesh] = planetEntries[i++];
   }
-  [planetName, planetMesh] = planetEntries[i++];
+
   for (const axis of ["x", "y", "z"]) {
     gsap.to(camera.position, {
-      duration: 1,
+      duration: 0,
       delay: 0,
       [axis]:
         planetMesh.position[axis] +
-        config[planetName].bigSize * planetMesh.scale[axis] * 5,
+        (config[planetName]?.bigSize || sunDiameter) *
+          planetMesh.scale[axis] *
+          5,
+      // onUpdate: () => (controls.target = planetMesh.position),
     });
   }
-  camera.lookAt(planetMesh.position);
+  // for (const axis of ["x", "y", "z"]) {
+  //   gsap.to(controls.target, {
+  //     duration: 1,
+  //     delay: 0,
+  //     [axis]: planetMesh.position[axis],
+  //     // onUpdate: () => (controls.target = planetMesh.position),
+  //   });
+  // }
+  // camera.lookAt(planetMesh.position);
   controls.target = planetMesh.position;
+
   document.querySelector(".planet-focus").textContent = planetName;
 });
 document.querySelector(".scale").addEventListener("click", () => {
